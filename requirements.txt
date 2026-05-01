@@ -1,0 +1,5 @@
+the requirements.txt is - easyocr>=1.7.1
+opencv-python>=4.8.0
+pdf2image>=1.17.0
+Pillow>=10.0.0
+langchain-openai>=0.3.29
