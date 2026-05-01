@@ -1,5 +1,6 @@
 # agentX
 Section 1: Executive Summary
+
 agentX is a high-speed customer acquisition engine designed to plug into PFL's AI-First stack.
 
 It combines OCR-based document intelligence, Agentic DQI checks, loan eligibility orchestration, and mock LOS/RegIntel integration patterns to accelerate education-loan journeys from document upload to pre-approved limit discovery. The system is built to demonstrate how AI agents can collect applicant data, validate document quality, call lending-policy functions, and return structured decisions with minimal operational friction.
