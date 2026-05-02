@@ -10,6 +10,7 @@ AWS: S3 for secure document intake and storage, Lambda for event-driven OCR, DQI
 Python: Core OCR, DQI, loan-policy checks, mock API, and orchestration logic.
 React: Customer-facing chat and upload interface for guided loan journeys.
 LangChain: Agentic orchestration layer for chat-driven workflows, function calls, and OpenAI-backed response generation.
+
 Section 3: The "Risk-First" Layer
 agentX is designed with a Risk-First layer that validates applicant identity and document quality before pushing a case toward approval.
 
