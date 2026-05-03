@@ -1,30 +1,165 @@
-# agentX
-Section 1: Executive Summary
 
-agentX is a high-speed customer acquisition engine designed to plug into PFL's AI-First stack.
+# agentX — AI-First Customer Acquisition Engine for Education Loans
 
-It combines OCR-based document intelligence, Agentic DQI checks, loan eligibility orchestration, and mock LOS/RegIntel integration patterns to accelerate education-loan journeys from document upload to pre-approved limit discovery. The system is built to demonstrate how AI agents can collect applicant data, validate document quality, call lending-policy functions, and return structured decisions with minimal operational friction.
+> Built for the Poonawalla Fincorp Hackathon · Mock Demo 
 
-Section 2: The Tech Stack
-AWS: S3 for secure document intake and storage, Lambda for event-driven OCR, DQI, and eligibility workflows.
-Python: Core OCR, DQI, loan-policy checks, mock API, and orchestration logic.
-React: Customer-facing chat and upload interface for guided loan journeys.
-LangChain: Agentic orchestration layer for chat-driven workflows, function calls, and OpenAI-backed response generation.
+agentX is a high-speed loan origination intelligence layer that combines agentic chat, OCR-based document intelligence, risk-first DQI validation, and mock LOS/RegIntel integration — all designed to plug into PFL's AI-First stack and compress the education-loan journey from document upload to pre-approved limit discovery.
 
-Section 3: The "Risk-First" Layer
-agentX is designed with a Risk-First layer that validates applicant identity and document quality before pushing a case toward approval.
+---
 
-The current code demonstrates this through OCR and DQI validation for PAN cards, marksheets, and university offer letters. The same pattern extends to KYC checks:
+## What agentX Does
 
-Aadhaar validation: Extract Aadhaar details, verify format, compare applicant name/date of birth, and flag missing or low-confidence fields.
-PAN validation: Extract PAN number, name, father's name, and date of birth; validate PAN format and compare the PAN name against the University Offer Letter.
-Face Match: Compare the applicant selfie with document photo evidence, returning a match score and anomaly flag when confidence is below policy threshold.
-These checks are intended to feed a structured DQI and RegIntel response so only clean, policy-compliant applications move forward. By surfacing anomalies automatically, agentX supports Zero-Manual Intervention for straight-through cases while routing only exceptions for review.
+Traditional loan journeys are slow, manual, and opaque. agentX inverts that with an agent that:
 
-```markdown
-# OCR & DQI Engine (Python/EasyOCR)
+- **Talks** — a browser-based chat interface that guides applicants through the loan flow naturally
+- **Reads** — OCR-powered document extraction for PAN cards, marksheets, and university offer letters
+- **Validates** — a Risk-First DQI (Data Quality Integrity) layer that catches anomalies before they enter the pipeline
+- **Decides** — deterministic loan eligibility checks and a mock PFL pre-approval engine
+- **Hands off** — structured JSON payloads simulating LOS and RegIntel integration for downstream consumption
 
-This project extracts key fields from uploaded documents such as PAN cards and marksheets, then calculates a Data Quality Index (DQI) score.
+---
+
+## Quickstart
+
+```powershell
+python agentx_single_app.py --port 8092
+```
+
+Then open: `http://127.0.0.1:8092`
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Cloud & Storage | AWS S3 (document intake), Lambda (event-driven workflows) |
+| Backend | Python — OCR, DQI, eligibility, mock API, orchestration |
+| Frontend | React — chat UI and document upload interface |
+| Agentic Layer | LangChain + OpenAI — chat-driven workflows and function calls |
+
+---
+
+## Core Features
+
+###  Autonomous Intent Detection
+
+agentX detects when a user is describing a university, GRE score, study destination, or pre-approval scenario — without requiring them to navigate menus or select a workflow.
+
+**Example prompt:**
+```
+GRE 322, admit from Northeastern University, USA, CIBIL 780, age 24, Indian, no collateral.
+```
+
+This single message triggers the full pre-approval workflow: intent extraction → input parsing → mock PFL API call → pre-approved limit → LOS/RegIntel JSON generation.
+
+---
+
+###  OCR & DQI Engine
+
+Powered by EasyOCR (Python). Extracts structured fields from uploaded documents and scores them with a Data Quality Index.
+
+**Supported documents and extracted fields:**
+
+| Document | Extracted Fields |
+|---|---|
+| PAN Card | PAN number, name, father's name, date of birth |
+| Marksheet | Student name, roll/seat/registration number, year, percentage, total marks, subject rows |
+| University Offer Letter | Applicant name (for cross-document validation) |
+
+**DQI Score Components:**
+- Completeness of required fields
+- Format and range validations (e.g. `AAAAA9999A` PAN pattern)
+- Average OCR confidence
+
+**Output includes:** DQI score, grade, missing fields, failed validations, raw OCR text, bounding boxes, and confidence values.
+
+```powershell
+# Basic usage
+python ocr_dqi_engine.py path\to\pan.jpg --doc-type pan
+
+# With marksheet output
+python ocr_dqi_engine.py path\to\marksheet.pdf --doc-type marksheet --output result.json
+
+# Auto-detect document type
+python ocr_dqi_engine.py path\to\document.png --doc-type auto
+
+# Cross-document PAN vs Offer Letter validation
+python ocr_dqi_engine.py path\to\pan.jpg --doc-type pan --offer-letter path\to\offer-letter.pdf
+```
+
+---
+
+###  Risk-First Layer
+
+agentX validates applicant identity and document quality *before* any case is pushed toward approval. Only clean, policy-compliant applications proceed — exceptions are routed for manual review.
+
+**KYC Checks:**
+
+- **Aadhaar Validation** — extracts Aadhaar details, verifies format, compares name/DOB, flags missing or low-confidence fields
+- **PAN Validation** — extracts PAN number, name, father's name, and DOB; validates format; cross-checks PAN name against University Offer Letter using fuzzy matching
+- **Face Match** — compares applicant selfie against document photo evidence; returns match score and anomaly flag when confidence falls below policy threshold
+
+**Agentic DQI (Cross-Document):**
+
+When `--offer-letter` is passed, the engine compares the extracted PAN name against the offer letter applicant name with fuzzy matching. If similarity falls below the configured threshold, an `agentic_dqi` anomaly block is added to the output — surfacing discrepancies automatically instead of silently passing bad data forward.
+
+This supports **Zero-Manual Intervention** for straight-through cases while routing only exceptions for human review.
+
+---
+
+###  Agentic Orchestrator
+
+`agentic_orchestrator.py` is a LangChain/OpenAI-powered chat agent for loan eligibility conversations.
+
+```powershell
+python agentic_orchestrator.py
+```
+
+**Example prompt:**
+```
+Check my eligibility for a 50L loan.
+```
+
+The orchestrator asks for missing inputs (monthly income, current EMI, CIBIL score, age, employment type), runs a deterministic eligibility tool, and optionally uses LangChain `ChatOpenAI` to summarize the result when `OPENAI_API_KEY` is set.
+
+**Education Loan Pre-Approval flow:**
+```
+GRE 322, admit from Northeastern University, USA, CIBIL 780, age 24, Indian, no collateral.
+```
+This executes `process_poonawalla_preapproval(...)`, which compares GRE score and university tier against a demo scorecard, applies public Poonawalla Fincorp education-loan caps, and returns a pre-approved limit.
+
+---
+
+###  Mock PFL API & Bank-Grade Handshake
+
+The `mock_api` folder exposes a local mock PFL API at `POST /v1/preapproval`.
+
+```powershell
+python mock_api/server.py --port 8080
+$env:PFL_MOCK_API_URL = "http://127.0.0.1:8080"
+python agentic_orchestrator.py
+```
+
+When `PFL_MOCK_API_URL` is set, the orchestrator routes calls to the mock API instead of the in-process function.
+
+When the pre-approval workflow runs, agentX generates a structured JSON handshake simulating a real banking integration:
+
+```json
+{
+  "systems": ["LOS", "RegIntel"],
+  "environment": "mock",
+  "product": "Education Loan"
+}
+```
+
+The handshake includes:
+- Mock PFL pre-approval response
+- Mock Loan Origination System (LOS) application response
+- Mock RegIntel compliance response
+- Agentic decision block explaining the next recommended action
+
+---
 
 ## Install
 
@@ -34,90 +169,22 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-PDF input requires Poppler to be installed and available on `PATH`.
+> PDF input requires **Poppler** to be installed and available on PATH.
 
-## Usage
+---
 
-```powershell
-python ocr_dqi_engine.py path\to\pan.jpg --doc-type pan
-python ocr_dqi_engine.py path\to\marksheet.pdf --doc-type marksheet --output result.json
-python ocr_dqi_engine.py path\to\document.png --doc-type auto
-python ocr_dqi_engine.py path\to\pan.jpg --doc-type pan --offer-letter path\to\offer-letter.pdf
-```
+## End-to-End Example Flow
 
-## Extracted Fields
+1. User inputs: `GRE 322, admit from Northeastern University, USA, CIBIL 780, age 24, Indian, no collateral.`
+2. Agent detects pre-approval intent and extracts all parameters
+3. `POST /v1/preapproval` is called against the mock PFL API
+4. Pre-approved limit is returned based on GRE score + university tier scorecard
+5. LOS and RegIntel JSON payloads are generated for the application journey
+6. User uploads PAN card → OCR extracts fields → DQI score is calculated
+7. PAN name is cross-validated against University Offer Letter → anomaly flagged if mismatch
 
-PAN cards:
+---
 
-- PAN number
-- Name
-- Father's name
-- Date of birth
+## Important Disclaimer
 
-Marksheets:
-
-- Student name
-- Roll/seat/registration number
-- Year
-- Percentage
-- Total marks
-- Subject rows when visible as `Subject 78/100`
-
-## DQI
-
-The DQI score combines:
-
-- Completeness of required fields
-- Format/range validations
-- Average OCR confidence
-
-The output JSON includes the final score, grade, missing fields, failed validations, raw OCR text, bounding boxes, and confidence values.
-
-## Agentic DQI
-
-For PAN verification against a University Offer Letter, pass `--offer-letter`.
-
-The engine extracts the PAN name and the offer-letter applicant/student name, compares them with fuzzy matching, and adds an `agentic_dqi` section. If the names do not match the configured threshold, the output includes a `"Data Quality Anomaly"` with the PAN name, offer-letter name, similarity score, and rule that failed.
-
-```powershell
-python ocr_dqi_engine.py uploads\pan.jpg --doc-type pan --offer-letter uploads\offer-letter.pdf --output result.json
-```
-
-## Agentic Orchestrator
-
-`agentic_orchestrator.py` is a separate LangChain/OpenAI-ready chat script for loan eligibility conversations.
-
-```powershell
-python agentic_orchestrator.py
-```
-
-Example prompt:
-
-```text
-Check my eligibility for a 50L loan.
-```
-
-The orchestrator asks for missing inputs such as monthly income, current EMI, CIBIL score, age, and employment type. It then runs a deterministic eligibility tool and optionally uses LangChain `ChatOpenAI` to summarize the result when `OPENAI_API_KEY` is set.
-
-For education-loan pre-approval, the orchestrator now calls a function instead of only replying with text:
-
-```text
-GRE 322, admit from Northeastern University, USA, CIBIL 780, age 24, Indian, no collateral.
-```
-
-This executes `process_poonawalla_preapproval(...)`, compares GRE score and university tier against a demo scorecard, applies public Poonawalla Fincorp education-loan caps, and returns a pre-approved limit. The public caps and eligibility are broad lender information; the GRE/university scoring grid is intentionally marked as a replaceable demo policy.
-
-### Mock PFL API
-
-The `mock_api` folder contains a local mock PFL API with `POST /v1/preapproval`.
-
-```powershell
-python mock_api/server.py --port 8080
-$env:PFL_MOCK_API_URL = "http://127.0.0.1:8080"
-python agentic_orchestrator.py
-```
-
-
-
-With `PFL_MOCK_API_URL` set, the orchestrator calls the mock API instead of the in-process function.
-```
+This is a **mock demo** built for hackathon purposes. It does not represent an official Poonawalla Fincorp sanction, underwriting rulebook, or production integration. Final approval in a real system would require verified documents, KYC, bureau data, lender policy checks, and live LOS/RegIntel connectivity. The GRE/university scoring grid is intentionally marked as a replaceable demo policy.
