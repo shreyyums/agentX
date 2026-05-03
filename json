@@ -1,0 +1,97 @@
+{
+  "reply": "Function call executed: POST /v1/preapproval. Pre-Approved Limit: Rs 8,800,000 (88.00L).",
+  "tool_call": {
+    "name": "POST /v1/preapproval",
+    "arguments": {
+      "gre_score": 322,
+      "university_choice": "Northeastern University",
+      "study_location": "usa",
+      "cibil_score": 780,
+      "age": 24,
+      "citizenship": "Indian",
+      "collateral_available": false
+    },
+    "result": {
+      "provider": "Poonawalla Fincorp Limited Mock",
+      "decision": "preapproved",
+      "preapproved_limit": 8800000,
+      "preapproved_limit_lakh": 88,
+      "currency": "INR",
+      "criteria": {
+        "public_caps": {
+          "unsecured_abroad": "Up to Rs 1 Cr",
+          "secured_abroad": "Up to Rs 3 Cr",
+          "secured_domestic": "Up to Rs 50 Lakh"
+        },
+        "demo_scorecard": {
+          "gre_multiplier": 0.85,
+          "university_tier": "strong",
+          "university_multiplier": 0.85,
+          "cibil_passed": true
+        }
+      },
+      "inputs": {
+        "gre_score": 322,
+        "university_choice": "Northeastern University",
+        "study_location": "usa",
+        "cibil_score": 780,
+        "age": 24,
+        "citizenship": "Indian",
+        "collateral_available": false
+      },
+      "hard_failures": [],
+      "disclaimer": "Mock response only. Final sanction requires lender verification."
+    }
+  },
+  "los_regintel": {
+    "integration": {
+      "provider": "Poonawalla Fincorp Limited",
+      "environment": "mock",
+      "systems": [
+        "LOS",
+        "RegIntel"
+      ],
+      "request_id": "pfl_mock_d0b7d82b27"
+    },
+    "los_response": {
+      "application_id": "LOS-EDU-68376D",
+      "product": "Education Loan",
+      "status": "PRE_APPROVED",
+      "preapproved_limit": 8800000,
+      "currency": "INR",
+      "conditions": [
+        "Final sanction subject to document verification",
+        "Institute admit letter required",
+        "Applicant and co-applicant KYC required"
+      ]
+    },
+    "regintel_response": {
+      "compliance_status": "PASS",
+      "checks": {
+        "kyc_required": "PENDING_UPLOAD",
+        "pan_validation": "PENDING",
+        "age_policy": "PASS",
+        "citizenship_policy": "PASS",
+        "study_location_policy": "PASS",
+        "sanctions_screening": "NO_MATCH"
+      }
+    },
+    "agentic_decision": {
+      "decision": "PRE_APPROVED_WITH_CONDITIONS",
+      "next_action": "Collect KYC, admit letter, GRE proof, co-applicant details, and financial documents."
+    }
+  },
+  "profile": {
+    "requested_loan_amount": null,
+    "monthly_income": null,
+    "existing_monthly_emi": 0,
+    "credit_score": 780,
+    "age": 24,
+    "employment_type": null,
+    "gre_score": 322,
+    "university_choice": "Northeastern University",
+    "study_location": "usa",
+    "collateral_available": false,
+    "citizenship": "Indian"
+  }
+}
